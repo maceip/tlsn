@@ -35,7 +35,7 @@ async fn main() {
     let user_agent = env::var("USER_AGENT").unwrap();
 
     let (notary_tls_socket, session_id) =
-        request_notarization(NOTARY_HOST, NOTARY_PORT, Some(NOTARY_MAX_TRANSCRIPT_SIZE)).await;
+        request_notarization(NOTARY_HOST, NOTARY_PORT, Some(NOTARY_MAX_TRANSCRIPT_SIZE), Some(NOTARY_MAX_TRANSCRIPT_SIZE)).await;
 
     // Basic default prover config using the session_id returned from /session endpoint just now
     let config = ProverConfig::builder()
