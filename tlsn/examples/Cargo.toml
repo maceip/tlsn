@@ -47,6 +47,8 @@ serde_json = "1.0"
 tracing-subscriber.workspace = true
 tracing.workspace = true
 
+spansy = {git = "https://github.com/tlsnotary/tlsn-utils", rev = "51f313d"}
+
 [[example]]
 name = "simple_prover"
 path = "simple/simple_prover.rs"
