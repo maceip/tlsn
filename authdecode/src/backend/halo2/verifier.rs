@@ -4,7 +4,9 @@ use crate::{
     verifier::{backend::Backend, error::VerifierError, verifier::VerificationInput},
     Proof,
 };
-use std::time::Instant;
+
+use web_time::Instant;
+
 
 use ff::{FromUniformBytes, WithSmallOrderMulGroup};
 use halo2_proofs::{
