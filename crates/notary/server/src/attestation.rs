@@ -30,7 +30,7 @@ pub async fn sgx_quote(State(_notary_globals): State<NotaryGlobals>) -> Result<
         }
         None => {
             debug!("Failed to retrieve quote.");
-            Err(quote3_error_t::SGX_QL_ERROR_UNEXPECTED) // Use a meaningful error here
+            Err(quote3_error_t::SGX_QL_ERROR_UNEXPECTED)
         }
     }
 }
