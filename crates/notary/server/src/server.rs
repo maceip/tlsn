@@ -144,14 +144,6 @@ pub async fn run_server(config: &NotaryServerProperties) -> Result<(), NotarySer
     let challenge_rustls_config = state.challenge_rustls_config();
     let default_rustls_config = state.default_rustls_config();
 
-    let challenge_rustls_config = state.challenge_rustls_config();
-
-    let rustls_config = ServerConfig::builder()
-        .with_no_client_auth()
-        .with_cert_resolver(state.resolver());
-
-    let acceptor = state.acceptor();
-
     tokio::spawn(async move {
         loop {
             match state.next().await.unwrap() {
