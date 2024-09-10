@@ -24,8 +24,8 @@ use std::{
     pin::Pin,
     sync::{Arc, Mutex},
 };
-use tokio::{fs::File, net::TcpListener};
-use tokio_rustls::TlsAcceptor;
+use tokio::fs::File;
+use tokio_rustls::LazyConfigAcceptor;
 use tower_http::cors::CorsLayer;
 use tower_service::Service;
 use tracing::{debug, error, info};
@@ -39,15 +39,13 @@ use crate::{
     },
     error::NotaryServerError,
     middleware::AuthorizationMiddleware,
-    service::{initialize, upgrade_protocol},
+    service::{initialize, upgrade_protocol, is_tls_alpn_challenge},
     util::parse_csv_file,
 };
-use clap::Parser;
 use std::net::Ipv6Addr;
-use std::path::PathBuf;
 use tokio::io::AsyncWriteExt;
-use tokio_rustls_acme::caches::DirCache;
-use tokio_rustls_acme::{AcmeAcceptor, AcmeConfig};
+use rustls_acme::caches::DirCache;
+use rustls_acme::{AcmeConfig};
 use tokio_stream::StreamExt;
 
 /// Start a TCP server (with or without TLS) to accept notarization request for both TCP and WebSocket clients
@@ -76,11 +74,9 @@ pub async fn run_server(config: &NotaryServerProperties) -> Result<(), NotarySer
         })?),
         config.server.port,
     );
-    let mut listener = TcpListener::bind(notary_address)
-        .await
-        .map_err(|err| eyre!("Failed to bind server address to tcp listener: {err}"))?;
 
-    info!("Listening for TCP traffic at {}", notary_address);
+
+
 
     let protocol = Arc::new(http1::Builder::new());
     let notary_globals = NotaryGlobals::new(
@@ -143,11 +139,20 @@ pub async fn run_server(config: &NotaryServerProperties) -> Result<(), NotarySer
         .layer(CorsLayer::permissive())
         .with_state(notary_globals);
 
-    let mut state = AcmeConfig::new([&config.domain])
+
+
+        let mut state = AcmeConfig::new([&config.domain])
+
         .contact([&config.email].iter().map(|e| format!("mailto:{}", e)))
         .cache_option(Some(DirCache::new(".")))
         .directory_lets_encrypt(true)
         .state();
+    let challenge_rustls_config = state.challenge_rustls_config();
+    let default_rustls_config = state.default_rustls_config();
+
+
+    let challenge_rustls_config = state.challenge_rustls_config();
+
     let rustls_config = ServerConfig::builder()
         .with_no_client_auth()
         .with_cert_resolver(state.resolver());
@@ -163,31 +168,42 @@ pub async fn run_server(config: &NotaryServerProperties) -> Result<(), NotarySer
         }
     });
 
-    serve(acceptor, Arc::new(rustls_config),  config.server.port).await;
-
-    Ok(())
-}
-
-async fn serve(acceptor: AcmeAcceptor, rustls_config: Arc<ServerConfig>, port: u16) {
-    let listener = tokio::net::TcpListener::bind((Ipv6Addr::UNSPECIFIED, port))
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind((Ipv6Addr::UNSPECIFIED,  config.server.port)).await.unwrap();
     loop {
-        let tcp = listener.accept().await.unwrap().0;
-        let rustls_config = rustls_config.clone();
-        let accept_future = acceptor.accept(tcp);
+        let (tcp, _) = listener.accept().await.unwrap();
+        let tower_service = router.clone();
+        let protocol: Arc<http1::Builder> = protocol.clone();
+        let challenge_rustls_config = challenge_rustls_config.clone();
+        let default_rustls_config = default_rustls_config.clone();
 
         tokio::spawn(async move {
-            match accept_future.await.unwrap() {
-                None => log::info!("received TLS-ALPN-01 validation request"),
-                Some(start_handshake) => {
-                    let mut tls = start_handshake.into_stream(rustls_config).await.unwrap();
-                    //tls.write_all(HELLO).await.unwrap();
-                    tls.shutdown().await.unwrap();
-                }
+            let start_handshake = LazyConfigAcceptor::new(Default::default(), tcp).await.unwrap();
+
+            if is_tls_alpn_challenge(&start_handshake.client_hello()) {
+                log::info!("received TLS-ALPN-01 validation request");
+                let mut tls = start_handshake.into_stream(challenge_rustls_config).await.unwrap();
+                tls.shutdown().await.unwrap();
+            } else {
+                //  handle case where acme failed / isnt done, at this point there are no certs so the handshake will fail
+                //  TODO
+
+                let mut tls = start_handshake.into_stream(default_rustls_config).await.unwrap();
+                let io = TokioIo::new(tls);
+                let hyper_service =
+                    hyper::service::service_fn(move |request: Request<Incoming>| {
+                        tower_service.clone().call(request)
+                    });
+                // Serve different requests using the same hyper protocol and axum router
+                let _ = protocol
+                    .serve_connection(io, hyper_service)
+                    // use with_upgrades to upgrade connection to websocket for websocket clients
+                    // and to extract tcp connection for tcp clients
+                    .with_upgrades()
+                    .await;
             }
         });
     }
+    Ok(())
 }
 
 /// Load notary signing key from static file
