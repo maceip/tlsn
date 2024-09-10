@@ -6,7 +6,6 @@ edition = "2021"
 [features]
 attestation = ["dep:sgx-dcap-ql-rs",]
 
-
 [dependencies]
 tlsn-common = { workspace = true }
 tlsn-verifier = { workspace = true }
