@@ -23,8 +23,6 @@ pub struct NotaryServerProperties {
     pub email: String,
     /// ACME cert cache dir
     pub certcache: Option<PathBuf>,
-
-
 }
 
 #[derive(Clone, Debug, Deserialize, Default)]

@@ -9,6 +9,7 @@ use axum::{
     response::{IntoResponse, Json, Response},
 };
 use axum_macros::debug_handler;
+use futures_rustls::rustls::server::ClientHello;
 use p256::ecdsa::{Signature, SigningKey};
 use tlsn_common::config::ProtocolConfigValidator;
 use tlsn_verifier::tls::{Verifier, VerifierConfig};
@@ -16,8 +17,6 @@ use tokio::io::{AsyncRead, AsyncWrite};
 use tokio_util::compat::TokioAsyncReadCompatExt;
 use tracing::{debug, error, info, trace};
 use uuid::Uuid;
-use futures_rustls::rustls::server::ClientHello;
-
 
 use crate::{
     domain::notary::{
@@ -32,9 +31,7 @@ use crate::{
     },
 };
 
-
 pub const ACME_TLS_ALPN_NAME: &[u8] = b"acme-tls/1";
-
 
 /// A wrapper enum to facilitate extracting TCP connection for either WebSocket or TCP clients,
 /// so that we can use a single endpoint and handler for notarization for both types of clients
@@ -204,5 +201,9 @@ pub async fn notary_service<T: AsyncWrite + AsyncRead + Send + Unpin + 'static>(
 
 /// Returns `true` if the client_hello indicates a tls-alpn-01 challenge connection.
 pub fn is_tls_alpn_challenge(client_hello: &ClientHello) -> bool {
-    return client_hello.alpn().into_iter().flatten().eq([ACME_TLS_ALPN_NAME]);
+    return client_hello
+        .alpn()
+        .into_iter()
+        .flatten()
+        .eq([ACME_TLS_ALPN_NAME]);
 }
