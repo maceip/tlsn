@@ -5,9 +5,9 @@ mod middleware;
 mod server;
 mod server_tracing;
 mod service;
+#[cfg(feature = "tee_quote")]
+mod tee;
 mod util;
-#[cfg(feature = "attestation")]
-mod attestation;
 
 pub use config::{
     AuthorizationProperties, LoggingProperties, NotarizationProperties, NotaryServerProperties,
