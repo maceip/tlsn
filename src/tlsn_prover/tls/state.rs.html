@@ -1,5 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `tlsn-prover/src/tls/state.rs`."><title>state.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="tlsn_prover" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
-    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/prover/src/tls/state.rs`."><title>state.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-c5d6553a23f1e5a6.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="tlsn_prover" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0 (eeb90cda1 2024-09-04)" data-channel="1.81.0" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -176,29 +175,19 @@
 <a href="#175" id="175">175</a>
 <a href="#176" id="176">176</a>
 <a href="#177" id="177">177</a>
-<a href="#178" id="178">178</a>
-<a href="#179" id="179">179</a>
-<a href="#180" id="180">180</a>
-<a href="#181" id="181">181</a>
-<a href="#182" id="182">182</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! TLS prover states.
 
-</span><span class="kw">use </span><span class="kw">crate</span>::tls::{MuxFuture, OTFuture};
-<span class="kw">use </span>mpz_core::commit::Decommitment;
-<span class="kw">use </span>mpz_garble::protocol::deap::{DEAPThread, DEAPVm, PeerEncodings};
+</span><span class="kw">use </span>mpz_core::commit::Decommitment;
+<span class="kw">use </span>mpz_garble::protocol::deap::PeerEncodings;
 <span class="kw">use </span>mpz_garble_core::{encoding_state, EncodedValue};
-<span class="kw">use </span>mpz_ot::actor::kos::{SharedReceiver, SharedSender};
-<span class="kw">use </span>mpz_share_conversion::{ConverterSender, Gf2_128};
 <span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>tls_core::{handshake::HandshakeData, key::PublicKey};
 <span class="kw">use </span>tls_mpc::MpcTlsLeader;
-<span class="kw">use </span>tlsn_common::mux::MuxControl;
-<span class="kw">use </span>tlsn_core::{
-    commitment::TranscriptCommitmentBuilder,
-    msg::{ProvingInfo, TlsnMessage},
-    Transcript,
+<span class="kw">use </span>tlsn_common::{
+    mux::{MuxControl, MuxFuture},
+    Context, DEAPThread, Io, OTReceiver,
 };
-<span class="kw">use </span>utils_aio::duplex::Duplex;
+<span class="kw">use </span>tlsn_core::{commitment::TranscriptCommitmentBuilder, msg::ProvingInfo, Transcript};
 
 <span class="doccomment">/// Entry state
 </span><span class="kw">pub struct </span>Initialized;
@@ -207,26 +196,27 @@
 
 <span class="doccomment">/// State after MPC setup has completed.
 </span><span class="kw">pub struct </span>Setup {
-    <span class="doccomment">/// A muxer for communication with the Notary
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) mux_ctrl: MuxControl,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) io: Io,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) mux_ctrl: MuxControl,
     <span class="kw">pub</span>(<span class="kw">crate</span>) mux_fut: MuxFuture,
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) mpc_tls: MpcTlsLeader,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) vm: DEAPVm&lt;SharedSender, SharedReceiver&gt;,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) ot_fut: OTFuture,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) gf2: ConverterSender&lt;Gf2_128, SharedSender&gt;,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) vm: DEAPThread,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) ot_recv: OTReceiver,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) ctx: Context,
 }
 
 <span class="macro">opaque_debug::implement!</span>(Setup);
 
 <span class="doccomment">/// State after the TLS connection has been closed.
 </span><span class="kw">pub struct </span>Closed {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) io: Io,
     <span class="kw">pub</span>(<span class="kw">crate</span>) mux_ctrl: MuxControl,
     <span class="kw">pub</span>(<span class="kw">crate</span>) mux_fut: MuxFuture,
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) vm: DEAPVm&lt;SharedSender, SharedReceiver&gt;,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) ot_fut: OTFuture,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) gf2: ConverterSender&lt;Gf2_128, SharedSender&gt;,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) vm: DEAPThread,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) ot_recv: OTReceiver,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) ctx: Context,
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) start_time: u64,
     <span class="kw">pub</span>(<span class="kw">crate</span>) handshake_decommitment: Decommitment&lt;HandshakeData&gt;,
@@ -240,13 +230,13 @@
 
 <span class="doccomment">/// Notarizing state.
 </span><span class="kw">pub struct </span>Notarize {
-    <span class="doccomment">/// A muxer for communication with the Notary
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) mux_ctrl: MuxControl,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) io: Io,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) mux_ctrl: MuxControl,
     <span class="kw">pub</span>(<span class="kw">crate</span>) mux_fut: MuxFuture,
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) vm: DEAPVm&lt;SharedSender, SharedReceiver&gt;,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) ot_fut: OTFuture,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) gf2: ConverterSender&lt;Gf2_128, SharedSender&gt;,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) vm: DEAPThread,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) ot_recv: OTReceiver,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) ctx: Context,
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) start_time: u64,
     <span class="kw">pub</span>(<span class="kw">crate</span>) handshake_decommitment: Decommitment&lt;HandshakeData&gt;,
@@ -275,11 +265,12 @@
         );
 
         <span class="self">Self </span>{
+            io: state.io,
             mux_ctrl: state.mux_ctrl,
             mux_fut: state.mux_fut,
             vm: state.vm,
-            ot_fut: state.ot_fut,
-            gf2: state.gf2,
+            ot_recv: state.ot_recv,
+            ctx: state.ctx,
             start_time: state.start_time,
             handshake_decommitment: state.handshake_decommitment,
             server_public_key: state.server_public_key,
@@ -292,12 +283,13 @@
 
 <span class="doccomment">/// Proving state.
 </span><span class="kw">pub struct </span>Prove {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) io: Io,
     <span class="kw">pub</span>(<span class="kw">crate</span>) mux_ctrl: MuxControl,
     <span class="kw">pub</span>(<span class="kw">crate</span>) mux_fut: MuxFuture,
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) vm: DEAPVm&lt;SharedSender, SharedReceiver&gt;,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) ot_fut: OTFuture,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) gf2: ConverterSender&lt;Gf2_128, SharedSender&gt;,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) vm: DEAPThread,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) ot_recv: OTReceiver,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) ctx: Context,
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) handshake_decommitment: Decommitment&lt;HandshakeData&gt;,
 
@@ -305,24 +297,21 @@
     <span class="kw">pub</span>(<span class="kw">crate</span>) transcript_rx: Transcript,
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) proving_info: ProvingInfo,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) channel: <span class="prelude-ty">Option</span>&lt;Box&lt;<span class="kw">dyn </span>Duplex&lt;TlsnMessage&gt;&gt;&gt;,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) prove_thread: <span class="prelude-ty">Option</span>&lt;DEAPThread&lt;SharedSender, SharedReceiver&gt;&gt;,
 }
 
 <span class="kw">impl </span>From&lt;Closed&gt; <span class="kw">for </span>Prove {
     <span class="kw">fn </span>from(state: Closed) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
+            io: state.io,
             mux_ctrl: state.mux_ctrl,
             mux_fut: state.mux_fut,
             vm: state.vm,
-            ot_fut: state.ot_fut,
-            gf2: state.gf2,
+            ot_recv: state.ot_recv,
+            ctx: state.ctx,
             handshake_decommitment: state.handshake_decommitment,
             transcript_tx: state.transcript_tx,
             transcript_rx: state.transcript_rx,
             proving_info: ProvingInfo::default(),
-            channel: <span class="prelude-val">None</span>,
-            prove_thread: <span class="prelude-val">None</span>,
         }
     }
 }
@@ -346,7 +335,7 @@
 }
 
 <span class="kw">fn </span>collect_encodings(
-    vm: <span class="kw-2">&amp;</span>DEAPVm&lt;SharedSender, SharedReceiver&gt;,
+    vm: <span class="kw-2">&amp;</span><span class="kw">impl </span>PeerEncodings,
     transcript_tx: <span class="kw-2">&amp;</span>Transcript,
     transcript_rx: <span class="kw-2">&amp;</span>Transcript,
 ) -&gt; HashMap&lt;String, EncodedValue&lt;encoding_state::Active&gt;&gt; {
