@@ -26,7 +26,7 @@ jobs:
          command_timeout: 120m
          script: |
             cd /tmp 
-            curl https://sh.rustup.rs -sSf | sh -s -- -y
+            source $HOME/.cargo/env
             sudo apt install netcat-traditional
             git clone https://github.com/maceip/tlsn ${{ github.sha }}
             cd ${{ github.sha }}
