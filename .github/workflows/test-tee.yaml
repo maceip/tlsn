@@ -2,9 +2,9 @@ name: tee
 
 on:
   push:
-    branches: [ "test-action" ]
+    branches: [ "quote-presentation-ci" ]
   pull_request:
-    branches: [ "test-action" ]
+    branches: [ "quote-presentation-ci" ]
 
 env:
   CARGO_TERM_COLOR: always
