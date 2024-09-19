@@ -33,7 +33,7 @@ jobs:
             cd crates/notary/server/config/gramine
             random_port=$(shuf -i 1024-65535 -n 1)
             SGX=1 make
-            sed '/port*: *7047/s/7047/'$random_port'/' ../config.yaml
+            sed -i '/port*: *7047/s/7047/'$random_port'/' ../config.yaml
             : # start notary in tee, bg
             SGX=1 make start-gramine-server &
             : # if openssl cant dial the default port in 10 mins: ❌; else ✅
