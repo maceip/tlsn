@@ -34,7 +34,7 @@ jobs:
             cd ${{ github.sha }}
             git checkout ${{ github.sha }}
             cd crates/notary/server/config/gramine
-            SECONDS=0; set -o pipefail; while [ $SECONDS -lt 600 ]; do  echo -e "GET /info HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\n\r\n" |  openssl s_client -quiet -ignore_unexpected_eof localhost:7047 2>&1| tee s.log;  if [ $? -eq 0 ]; then exit 0; fi; sleep 2; done
+            SECONDS=0; set -o pipefail; while [ $SECONDS -lt 600 ]; do  echo -e "GET /info HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\n\r\n" |  openssl s_client -quiet -ignore_unexpected_eof localhost:7047 2>&1| tee s.log;  if [ $? -eq 0 ]; then break; fi; sleep 2; done
             RAWQUOTE=`cat s.log`
             curl -L \
               -X PATCH \
@@ -43,6 +43,7 @@ jobs:
               -H "X-GitHub-Api-Version: 2022-11-28" \
               https://api.github.com/repos/${GITHUB_REPOSITORY}/environments/tee/variables/AZURE_TEE_BUILD_PORT \
               -d '{"name":"AZURE_TEE_BUILD_PORT","value":"'$RAWQUOTE'"}'
+              exit 0
     - run: echo "${{ env.AZURE_TEE_BUILD_PORT }}"
     - run: echo $env:AZURE_TEE_BUILD_PORT
     - name: save quote from azure into env, write it to runner
