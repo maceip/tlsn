@@ -4,7 +4,7 @@ version = "0.1.0-alpha.6"
 edition = "2021"
 
 [features]
-tee_quote = ["dep:sgx-dcap-ql-rs",]
+tee_quote = ["dep:sgx-dcap-ql-rs", "dep:hex"]
 
 [dependencies]
 tlsn-common = { workspace = true }
@@ -47,4 +47,6 @@ tracing = { workspace = true }
 tracing-subscriber = { workspace = true, features = ["env-filter"] }
 uuid = { workspace = true, features = ["v4", "fast-rng"] }
 ws_stream_tungstenite = { workspace = true, features = ["tokio_io"] }
+
 sgx-dcap-ql-rs = { git = "https://github.com/intel/SGXDataCenterAttestationPrimitives", tag = "DCAP_1.21", optional = true }
+hex = { version = "0.4.3", optional = true }

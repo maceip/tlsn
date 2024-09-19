@@ -1,53 +1,116 @@
-use crate::domain::notary::NotaryGlobals;
-use axum::{
-    extract::State,
-    http::StatusCode,
-    response::{IntoResponse, Json, Response},
+use serde::{Deserialize, Serialize};
+use sgx_dcap_ql_rs::quote3_error_t;
+use std::{
+    fs::{File, OpenOptions},
+    io::{self, Read, Write},
+    path::Path,
 };
-use axum_macros::debug_handler;
-use serde::Serialize;
-use sgx_dcap_ql_rs::{quote3_error_t, sgx_report_t, sgx_target_info_t};
 use tracing::{debug, error, instrument};
 
-#[derive(Serialize)]
-struct QuoteBytesResponse {
-    quote: Vec<u8>,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Quote {
+    raw_quote: String,
+    mrsigner: String,
+    mrenclave: String,
+}
+
+impl Default for Quote {
+    fn default() -> Quote {
+        Quote {
+            raw_quote: "".to_string(),
+            mrsigner: "".to_string(),
+            mrenclave: "".to_string(),
+        }
+    }
+}
+
+impl std::fmt::Debug for QuoteError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            QuoteError::IoError(err) => write!(f, "IoError: {:?}", err),
+            QuoteError::IntelQuote3Error(err) => write!(f, "IntelQuote3Error: {}", *err as u8),
+        }
+    }
+}
+
+impl From<io::Error> for QuoteError {
+    fn from(err: io::Error) -> QuoteError {
+        QuoteError::IoError(err)
+    }
+}
+
+enum QuoteError {
+    IoError(io::Error),
+    IntelQuote3Error(quote3_error_t),
 }
 
 #[instrument(level = "debug", skip_all)]
-async fn sgx_quote(
-    State(_notary_globals): State<NotaryGlobals>,
-) -> Result<Vec<u8>, quote3_error_t> {
-    let sgx_report: sgx_report_t = Default::default();
-
-    let (result, sgx_quote) = sgx_dcap_ql_rs::sgx_qe_get_quote(&sgx_report);
-
-    if result != sgx_dcap_ql_rs::quote3_error_t::SGX_QL_SUCCESS {
-        error!("Failed to retrieve quote");
-        return Err(result);
+async fn gramine_quote() -> Result<Quote, QuoteError> {
+    //// Check if the the gramine pseudo-hardware exists
+    if !Path::new("/dev/attestation/quote").exists() {
+        error!("Failed to retrieve quote hardware");
+        return Err(QuoteError::IntelQuote3Error(
+            quote3_error_t::SGX_QL_ERROR_UNEXPECTED,
+        ));
     }
-    if let Some(q) = sgx_quote {
-        debug!("Quote data: {:?}", q);
-        Ok(q) // Return q directly without wrapping in Option
-    } else {
-        debug!("Failed to retrieve quote.");
-        Err(quote3_error_t::SGX_QL_ERROR_UNEXPECTED)
+
+    // Reading attestation type
+    let mut attestation_file = File::open("/dev/attestation/attestation_type")?;
+    let mut attestation_type = String::new();
+    attestation_file.read_to_string(&mut attestation_type)?;
+    debug!("Detected attestation type: {}", attestation_type);
+
+    //// Writing 64 zero bytes to the gramine report pseudo-hardware `/dev/attestation/user_report_data`
+    let mut report_data_file = OpenOptions::new()
+        .write(true)
+        .open("/dev/attestation/user_report_data")?;
+    report_data_file.write_all(&[0u8; 64])?;
+
+    //// Reading from the gramine quote pseudo-hardware `/dev/attestation/quote`
+    let mut quote_file = File::open("/dev/attestation/quote")?;
+    let mut quote = Vec::new();
+    quote_file.read_to_end(&mut quote)?;
+
+    if quote.len() < 432 {
+        error!("Quote data is too short, expected at least 432 bytes");
+        return Err(QuoteError::IntelQuote3Error(
+            quote3_error_t::SGX_QL_ERROR_UNEXPECTED,
+        ));
     }
+
+    //// Extract MRENCLAVE and MRSIGNER
+    //// https://github.com/intel/linux-sgx/blob/main/common/inc/sgx_quote.h
+    let mrenclave = hex::encode(&quote[112..144]);
+    let mrsigner = hex::encode(&quote[176..208]);
+
+    debug!("MRENCLAVE: {}", mrenclave);
+    debug!("MRSIGNER: {}", mrsigner);
+
+    //// Return the Quote struct with the extracted data
+    Ok(Quote {
+        raw_quote: hex::encode(quote),
+        mrsigner: mrsigner,
+        mrenclave: mrenclave,
+    })
 }
 
-#[debug_handler(state = NotaryGlobals)]
-pub async fn quote(State(notary_globals): State<NotaryGlobals>) -> Response {
-    let mut target_info: sgx_target_info_t = Default::default();
-
-    //// sgx_qe_get_target_info() warms the QE and the result isnt used
-    //// if sgx_get_quote() returns SGX_QL_ATT_KEY_NOT_INITIALIZED we could
-    //// call sgx_qe_get_target_info() again, but that err code can be a
-    //// few other things so correctly handling it will be tricky, failing is probably better for now.
-    //// https://download.01.org/intel-sgx/latest/dcap-latest/linux/docs/Intel_SGX_ECDSA_QuoteLibReference_DCAP_API.pdf
-    let _result = sgx_dcap_ql_rs::sgx_qe_get_target_info(&mut target_info);
-
-    match sgx_quote(State(notary_globals)).await {
-        Ok(quote) => (StatusCode::OK, Json(QuoteBytesResponse { quote })).into_response(),
-        Err(code) => (StatusCode::INTERNAL_SERVER_ERROR, (code as u8).to_string()).into_response(),
+pub async fn quote() -> Quote {
+    //// tee-detection logic will live here, for now its only gramine-sgx
+    match gramine_quote().await {
+        Ok(quote) => quote,
+        Err(err) => {
+            error!("Failed to retrieve quote: {:?}", err);
+            match err {
+                QuoteError::IoError(_) => {
+                    //// error hamdle
+                    return Quote::default();
+                }
+                QuoteError::IntelQuote3Error(_) => {
+                    //// error hamdle
+                    return Quote::default();
+                }
+            }
+        }
     }
 }

@@ -120,7 +120,7 @@ pub async fn run_server(config: &NotaryServerProperties) -> Result<(), NotarySer
             .replace("{public_key}", &public_key),
     );
 
-    let mut router = Router::new()
+    let router = Router::new()
         .route(
             "/",
             get(|| async move { (StatusCode::OK, html_info).into_response() }),
@@ -139,6 +139,7 @@ pub async fn run_server(config: &NotaryServerProperties) -> Result<(), NotarySer
                         public_key,
                         git_commit_hash,
                         git_commit_timestamp,
+                        quote: quote().await,
                     }),
                 )
                     .into_response()
@@ -157,15 +158,6 @@ pub async fn run_server(config: &NotaryServerProperties) -> Result<(), NotarySer
         .route("/notarize", get(upgrade_protocol))
         .layer(CorsLayer::permissive())
         .with_state(notary_globals.clone());
-
-    #[cfg(feature = "tee_quote")]
-    {
-        let tee_router = Router::new()
-            .route("/quote", get(quote))
-            .with_state(notary_globals);
-
-        router = router.merge(tee_router);
-    }
 
     loop {
         // Poll and await for any incoming connection, ensure that all operations inside are infallible to prevent bringing down the server
