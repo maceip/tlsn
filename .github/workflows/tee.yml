@@ -16,7 +16,16 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    - name: azure-demo ${{ github.sha }}
+    - uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+    - name: azure-tee-build-${{ github.sha }}
       uses: appleboy/ssh-action@v1.0.3
       with:
          host: ${{ secrets.AZURE_TEE_BUILD_HOST }}
@@ -32,6 +41,7 @@ jobs:
             git checkout ${{ github.sha }}
             cd crates/notary/server/config/gramine
             random_port=$(shuf -i 1024-65535 -n 1)
+            SGX=1 make clean
             SGX=1 make
             sed -i '/port*: *7047/s/7047/'$random_port'/' ../config.yaml
             : # start notary in tee, bg
