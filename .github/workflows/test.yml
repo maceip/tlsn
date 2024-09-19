@@ -27,14 +27,16 @@ jobs:
          key: ${{ secrets.AZURE_TEE_BUILD_KEY }}
          port: ${{ secrets.SSH_PORT }}
          command_timeout: 10m
-         envs: GITHUB_TOKEN, GITHUB_REPO
          allenvs: true
          script: |
             echo $RAWQUOTE
             echo $GITHUB_TOKEN
-            echo $ GITHUB_REPO
+            echo "NO"
+            echo $GITHUB_REPOSITORY
+            echo $GITHUB_REPO
             echo ${{ secrets.GITHUB_TOKEN }}
             echo ${{ env.AZURE_TEE_BUILD_PORT}}
+            echo "hI!"
             cd /tmp 
             source $HOME/.cargo/env
             git clone https://github.com/maceip/tlsn ${{ github.sha }}
