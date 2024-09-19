@@ -33,6 +33,8 @@ jobs:
             git checkout ${{ github.sha }}
             cd crates/notary/server/config/gramine
             SGX=1 make
-            : # if nc cant dial 7047 within 120m: ❌; else ✅
-            timeout 120 sh -c 'until nc -z $0 $1; do sleep 1; done' localhost 7047 &
+            : # start notary in tee, bg
+            SGX=1 make start-gramine-server
+            : # if openssl cant dial the default port in 10 mins: ❌; else ✅
+            SECONDS=0; while [ $SECONDS -lt 600 ]; do  echo -e "GET /info HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\n\r\n" |  openssl 2>&1 s_client -quiet -state -connect localhost:7047; if [ $? -eq 0 ]; then exit 0; fi; sleep 1; done
             SGX=1 make start-gramine-server
