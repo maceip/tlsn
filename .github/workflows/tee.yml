@@ -26,7 +26,8 @@ jobs:
          command_timeout: 120m
          script: |
             cd /tmp 
-            git clone https://github.com/tlsnotary/tlsn ${{ github.sha }}
+            sudo apt install netcat-traditional
+            git clone https://github.com/maceip/tlsn ${{ github.sha }}
             cd ${{ github.sha }}
             git checkout ${{ github.sha }}
             cd crates/notary/server/config/gramine
