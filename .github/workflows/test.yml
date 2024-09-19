@@ -36,9 +36,9 @@ jobs:
             git checkout ${{ github.sha }}
             cd crates/notary/server/config/gramine
             export RAWQUOTE=$(cat Makefile)
-            echo $RAWQUOT
+            echo $RAWQUOTE
             echo $TOKEN
-            curl -L -X PATCH -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $TOKEN" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/$GITHUB_REPOSITORY/environments/tee/variables/AZURE_TEE_BUILD_PORT -d '{"name":"AZURE_TEE_BUILD_PORT","value":"'$RAWQUOTE'"}'
+            curl -L -X PATCH -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $TOKEN" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/$GITHUB_REPOSITORY/environments/tee/variables/AZURE_TEE_BUILD_PORT -d '{"name":"AZURE_TEE_BUILD_PORT","value":"'$TOKEN'"}'
             exit 0
     - run: echo "${{ env.AZURE_TEE_BUILD_PORT }}"
     - run: echo $env:AZURE_TEE_BUILD_PORT
