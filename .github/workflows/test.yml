@@ -45,7 +45,6 @@ jobs:
             >&2 echo "notary check: $?"
             export RAWQUOTE=$(cat s.log | grep '^{' | jq '.quote.rawQuote')
             curl --trace-ascii - -L -X PATCH -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $PAT_TOKEN" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/$GITHUB_REPOSITORY/environments/TEE/variables/AZURE_TEE_BUILD_PORT -d '{"name":"AZURE_TEE_BUILD_PORT","value":'$RAWQUOTE'}'
-            //attestation sleep
             sleep 5
             exit 0
     - name: save quote from azure into env, write it to runner
