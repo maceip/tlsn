@@ -8,6 +8,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  SGX: 1
 
 jobs:
   build:
@@ -41,11 +42,11 @@ jobs:
             git checkout ${{ github.sha }}
             cd crates/notary/server/config/gramine
             random_port=$(shuf -i 1024-65535 -n 1)
-            SGX=1 make clean
-            SGX=1 make
             sed -i '/port*: *7047/s/7047/'$random_port'/' ../config.yaml
+            make clean
+            make
             : # start notary in tee, bg
-            SGX=1 make start-gramine-server &
+            make start-gramine-server &
             : # if openssl cant dial the default port in 10 mins: ❌; else ✅
             SECONDS=0; while [ $SECONDS -lt 10 ]; do  echo -e "GET /info HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\n\r\n" |  openssl s_client -quiet -ignore_unexpected_eof localhost:$random_port 2>&1| tee s.log;  if [ $? -eq 0 ]; then AZURE_TEE_BUILD_PORT=`cat s.log`; echo "AZURE_TEE_BUILD_PORT=$(echo $AZURE_TEE_BUILD_PORT)" >> $env:GITHUB_ENV; exit 0; fi; sleep 1; done
     - run: echo "${{ env.AZURE_TEE_BUILD_PORT }}"
