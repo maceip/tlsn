@@ -34,12 +34,7 @@ jobs:
          envs: PAT_TOKEN
          script: |
             cd /tmp 
-            source $HOME/.cargo/env
-            rm -rf ${{ github.sha }}
-            git clone https://github.com/maceip/tlsn ${{ github.sha }}
-            cd ${{ github.sha }}
-            git checkout ${{ github.sha }}
-            cd crates/notary/server/config/gramine    
+            source $HOME/.cargo/env 
             : # if openssl cant dial the default port in 10 mins: ❌; else ✅
             SECONDS=0; set -o pipefail; while ss=$? [ $SECONDS -lt 6 ]; do  echo 'RET: $ss'; echo -e "GET /info HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\n\r\n" |  openssl s_client -quiet -ignore_unexpected_eof localhost:555 2>&1| tee s.log;  if [ $? -eq 0 ]; then break; fi; sleep 2; done
             >&2 echo "notary check: $?"
