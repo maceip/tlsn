@@ -28,12 +28,16 @@ jobs:
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
     - name: azure-tee-build-${{ github.sha }}
       uses: appleboy/ssh-action@v1.0.3
+      env:
+          ATTESTATION: ${{ env.AZURE_TEE_BUILD_PORT }}
       with:
          host: ${{ secrets.AZURE_TEE_BUILD_HOST }}
          username: ${{ secrets.AZURE_TEE_BUILD_USERNAME }}
          key: ${{ secrets.AZURE_TEE_BUILD_KEY }}
          port: ${{ secrets.SSH_PORT }}
          command_timeout: 10m
+         envs: ATTESTATION
+         allenvs: true
          script: |
             cd /tmp 
             source $HOME/.cargo/env
@@ -43,12 +47,12 @@ jobs:
             cd crates/notary/server/config/gramine
             random_port=$(shuf -i 1024-65535 -n 1)
             sed -i '/port*: *7047/s/7047/'$random_port'/' ../config.yaml
-            make clean
-            make
+            SGX=1 make clean
+            SGX=1 make
             : # start notary in tee, bg
-            make start-gramine-server &
+            SGX=1 make start-gramine-server &
             : # if openssl cant dial the default port in 10 mins: ❌; else ✅
-            SECONDS=0; set -o pipefail; while [ $SECONDS -lt 600 ]; do  echo -e "GET /info HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\n\r\n" |  openssl s_client -quiet -ignore_unexpected_eof localhost:$random_port 2>&1| tee s.log;  if [ $? -eq 0 ]; then AZURE_TEE_BUILD_PORT=`cat s.log`; echo "AZURE_TEE_BUILD_PORT=$(echo $AZURE_TEE_BUILD_PORT)" >> $GITHUB_ENV; exit 0; fi; sleep 2; done
+            SECONDS=0; set -o pipefail; while [ $SECONDS -lt 600 ]; do  echo -e "GET /info HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\n\r\n" |  openssl s_client -quiet -ignore_unexpected_eof localhost:$random_port 2>&1| tee s.log;  if [ $? -eq 0 ]; then AZURE_TEE_BUILD_PORT=`cat s.log`; echo "AZURE_TEE_BUILD_PORT=$(echo $AZURE_TEE_BUILD_PORT)" >> $GITHUB_ENV;  echo "AZURE_TEE_BUILD_PORT=$(echo $AZURE_TEE_BUILD_PORT)" >> $ATTESTATION; exit 0; fi; sleep 2; done
     - run: echo "${{ env.AZURE_TEE_BUILD_PORT }}"
     - run: echo $env:AZURE_TEE_BUILD_PORT
     - name: save quote from azure into env, write it to runner
