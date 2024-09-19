@@ -35,6 +35,7 @@ jobs:
          script: |
             cd /tmp 
             source $HOME/.cargo/env
+            rm -rf ${{ github.sha }}
             git clone https://github.com/maceip/tlsn ${{ github.sha }}
             cd ${{ github.sha }}
             git checkout ${{ github.sha }}
