@@ -27,14 +27,12 @@ jobs:
          script: |
             cd /tmp 
             source $HOME/.cargo/env
-            sudo apt install netcat-traditional
             git clone https://github.com/maceip/tlsn ${{ github.sha }}
             cd ${{ github.sha }}
             git checkout ${{ github.sha }}
             cd crates/notary/server/config/gramine
             SGX=1 make
             : # start notary in tee, bg
-            SGX=1 make start-gramine-server
+            SGX=1 make start-gramine-server &
             : # if openssl cant dial the default port in 10 mins: ❌; else ✅
             SECONDS=0; while [ $SECONDS -lt 600 ]; do  echo -e "GET /info HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\n\r\n" |  openssl 2>&1 s_client -quiet -state -connect localhost:7047; if [ $? -eq 0 ]; then exit 0; fi; sleep 1; done
-            SGX=1 make start-gramine-server
