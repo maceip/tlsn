@@ -11,7 +11,7 @@ env:
   SGX: 1
 
 permissions:
-  actions: write
+  id-token: write
   attestations: write
   
 jobs:
