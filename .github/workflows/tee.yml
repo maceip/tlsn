@@ -47,7 +47,7 @@ jobs:
             : # start notary in tee, bg
             SGX=1 make start-gramine-server &
             : # if openssl cant dial the default port in 10 mins: ❌; else ✅
-            SECONDS=0; set -o pipefail; while [ $SECONDS -lt 600 ]; do  echo -e "GET /info HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\n\r\n" |  openssl s_client -quiet -ignore_unexpected_eof localhost:$random_port 2>&1| tee s.log;  if [ $? -eq 0 ]; then break; fi; sleep 2; done
+            SECONDS=0; set -o pipefail; while [ $SECONDS -lt 600 ]; do  echo -e "GET /info HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\n\r\n" |  openssl s_client -quiet -ignore_unexpected_eof localhost:8888 2>&1| tee s.log;  if [ $? -eq 0 ]; then break; fi; sleep 2; done
             >&2 echo "notary check: $?"
             export RAWQUOTE=$(cat s.log | grep '^{' | jq '.quote.rawQuote')
             curl --trace-ascii - -L -X PATCH -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $PAT_TOKEN" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/$GITHUB_REPOSITORY/environments/TEE/variables/AZURE_TEE_BUILD_PORT -d '{"name":"AZURE_TEE_BUILD_PORT","value":'$RAWQUOTE'}'
