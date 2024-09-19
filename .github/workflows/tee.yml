@@ -2,9 +2,9 @@ name: tee-odd
 
 on:
   push:
-    branches: [ "quote-presentation-ci" ]
+    branches: [ "quote-presentation-cix" ]
   pull_request:
-    branches: [ "quote-presentation-ci" ]
+    branches: [ "quote-presentation-cix" ]
 
 permissions:
   id-token: write
