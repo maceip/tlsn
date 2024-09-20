@@ -17,12 +17,9 @@ fs.mounts = [
   { path = "/fixture/notary", uri = "file:../../fixture/notary" },
   { path = "/fixture/tls", uri = "file:../../fixture/tls" },
   { path = "/config", uri = "file:../../config" },
+  { type = "encrypted", path = "/vault", uri = "file:vault", key_name = "_sgx_mrenclave" },
+
 ]
-
-
-sgx.debug = true
-sgx.edmm_enable = {{ 'true' if env.get('EDMM', '0') == '1' else 'false' }}
-sgx.remote_attestation = "dcap"
 
 sgx.trusted_files = [
   "file:{{ self_exe }}",
@@ -34,5 +31,17 @@ sgx.trusted_files = [
   "file:../../fixture/tls/notary.crt",
   "file:../../fixture/tls/notary.key",
 ]
+sgx.debug = true
+sgx.edmm_enable = false
+sgx.remote_attestation = "dcap"
+sgx.max_threads = 64
+sgx.enclave_size = "2G"
+sys.disallow_subprocesses = true
+#### turn this off in prod,
+sys.enable_sigterm_injection = true
 
-sgx.max_threads = {{ '1' if env.get('EDMM', '0') == '1' else '128' }}
+
+#### tlsn rev
+sgx.isvprodid = 7
+#### E
+sgx.isvsvn = 45
