@@ -62,3 +62,5 @@ jobs:
       uses: actions/attest-build-provenance@v1
       with:
         subject-path: /home/runner/work/_temp/sgx-build-quote.txt
+        subject-name: notaryserverbuilds.azurecr.io/sgx/gramine7
+        push-to-registry: true
