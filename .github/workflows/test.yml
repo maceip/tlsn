@@ -38,6 +38,7 @@ jobs:
             cd crates/notary/server/config/gramine
             random_port=$(shuf -i 1024-65535 -n 1)
             sed -i '/port*: *7047/s/7047/'$random_port'/' ../config.yaml
+            make clean
             SGX=1 make start-gramine-server &
             notarypid=$!
             BINGO=0
