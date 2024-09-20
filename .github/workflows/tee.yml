@@ -58,6 +58,12 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         path: /home/runner/work/_temp/sgx-build-quote.txt
+    - name: Auth w/ registry
+      uses: docker/login-action@v3
+      with:
+        registry: notaryserverbuilds.azurecr.io
+        username: notaryServerBuilds
+        password: ${{ secrets.AZURE_CR_BUILDS_PW }}
     - name: get github to sign our measurement
       uses: actions/attest-build-provenance@v1
       with:
