@@ -41,9 +41,9 @@ jobs:
             make clean
             SGX=1 make start-gramine-server &
             notarypid=$!
-            BINGO=0
-            SECONDS=0; set -o pipefail; while [ $SECONDS -lt 19 ]; do echo -e "GET /info HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\n\r\n" | openssl s_client -quiet localhost:$random_port 2>&1 | tee s.log; if [ $? -eq 0 ]; then echo 'BBB'; BINGO=1; break; fi; sleep 2; done
-            if [ $BINGO -eq 0 ]; then echo "Test Failed"; kill -SIGTERM $notarypid; exit 1; fi
+            win=0
+            SECONDS=0; set -o pipefail; while [ $SECONDS -lt 19 ]; do echo -e "GET /info HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\n\r\n" | openssl s_client -quiet localhost:9999 2>&1 | tee s.log; if [ $? -eq 0 ]; then win=1; break; fi; sleep 2; done
+            if [ $win -eq 0 ]; then echo "Build Failed"; kill -SIGTERM $notarypid; exit 1; fi
             export RAWQUOTE=$(cat s.log | grep '^{' |  jq '. | tostring')
             curl -L -X PATCH -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $PAT_TOKEN" -H "Connection: close" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/$GITHUB_REPOSITORY/environments/TEE/variables/AZURE_TEE_BUILD_PORT -d "{\"name\":\"AZURE_TEE_BUILD_PORT\",\"value\":$RAWQUOTE}"
             kill -SIGTERM $notarypid
