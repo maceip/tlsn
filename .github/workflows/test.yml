@@ -38,7 +38,7 @@ jobs:
             cd crates/notary/server/config/gramine
             random_port=$(shuf -i 1024-65535 -n 1)
             sed -i '/port*: *7047/s/7047/'$random_port'/' ../config.yaml
-            SGX=1 make start-gramine-server
+            SGX=1 make start-gramine-server &
             notarypid=$!
             BINGO=0
             SECONDS=0; set -o pipefail; while [ $SECONDS -lt 300 ]; do echo -e "GET /info HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\n\r\n" |  openssl s_client -quiet -ignore_unexpected_eof localhost:$random_port 2>&1| tee s.log;  if [ $? -eq 0 ]; then BINGO=1; break; fi;  sleep 2; done
